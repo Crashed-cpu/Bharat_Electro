@@ -1,94 +1,199 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { 
+  User as FirebaseUser,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  GoogleAuthProvider,
+  signInWithPopup
+} from 'firebase/auth';
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { auth, db } from '../firebase';
 
-interface User {
-  id: string;
-  email: string;
-  name: string;
+export interface User {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  photoURL: string | null;
   role: 'customer' | 'admin' | 'superadmin';
+  emailVerified: boolean;
+  createdAt: any;
+  lastLogin: any;
 }
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, token?: string) => Promise<boolean>;
-  logout: () => void;
+  login: (email: string, password: string) => Promise<void>;
+  signup: (email: string, password: string, displayName: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
+  logout: () => Promise<void>;
   isLoading: boolean;
+  error: string | null;
   requestOTP: (email: string) => Promise<boolean>;
   verifyOTP: (email: string, otp: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+// Format Firebase user to our User type
+const formatUser = (firebaseUser: FirebaseUser): User => ({
+  uid: firebaseUser.uid,
+  email: firebaseUser.email,
+  displayName: firebaseUser.displayName,
+  photoURL: firebaseUser.photoURL,
+  role: firebaseUser.email?.includes('admin@') ? 'admin' : 'customer',
+  emailVerified: firebaseUser.emailVerified,
+  createdAt: serverTimestamp(),
+  lastLogin: serverTimestamp()
+});
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
+  // Handle auth state changes
   useEffect(() => {
-    const savedUser = localStorage.getItem('bharat-electro-user');
-    if (savedUser) {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       try {
-        setUser(JSON.parse(savedUser));
+        if (firebaseUser) {
+          // Check if user exists in Firestore
+          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+          
+          if (!userDoc.exists()) {
+            // Create user in Firestore if doesn't exist
+            const newUser = formatUser(firebaseUser);
+            await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
+            setUser(newUser);
+          } else {
+            // Update last login time
+            const userData = userDoc.data() as User;
+            await setDoc(
+              doc(db, 'users', firebaseUser.uid),
+              { lastLogin: serverTimestamp() },
+              { merge: true }
+            );
+            setUser({ ...userData, lastLogin: serverTimestamp() });
+          }
+        } else {
+          setUser(null);
+        }
       } catch (error) {
-        console.error('Error loading user from localStorage:', error);
-        localStorage.removeItem('bharat-electro-user');
+        console.error('Auth state change error:', error);
+        setError('Failed to authenticate. Please try again.');
+      } finally {
+        setIsLoading(false);
       }
-    }
-    setIsLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  const login = async (email: string, token?: string): Promise<boolean> => {
+  const login = async (email: string, password: string) => {
     try {
-      // Mock login logic - replace with actual API call
-      const mockUser: User = {
-        id: '1',
-        email,
-        name: email.split('@')[0],
-        role: email.includes('admin') ? 'admin' : 'customer'
-      };
-      
-      setUser(mockUser);
-      localStorage.setItem('bharat-electro-user', JSON.stringify(mockUser));
-      return true;
-    } catch (error) {
+      setError(null);
+      setIsLoading(true);
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (error: any) {
       console.error('Login error:', error);
-      return false;
+      setError(error.message || 'Failed to sign in');
+      throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('bharat-electro-user');
-  };
-
-  const requestOTP = async (email: string): Promise<boolean> => {
+  const signup = async (email: string, password: string, displayName: string) => {
     try {
-      // Mock OTP request - replace with actual API call
-      console.log('OTP requested for:', email);
-      return true;
-    } catch (error) {
-      console.error('OTP request error:', error);
-      return false;
+      setError(null);
+      setIsLoading(true);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Update user profile with display name
+      if (userCredential.user) {
+        await setDoc(doc(db, 'users', userCredential.user.uid), {
+          uid: userCredential.user.uid,
+          email: userCredential.user.email,
+          displayName,
+          role: 'customer',
+          emailVerified: false,
+          createdAt: serverTimestamp(),
+          lastLogin: serverTimestamp()
+        });
+      }
+    } catch (error: any) {
+      console.error('Signup error:', error);
+      setError(error.message || 'Failed to create an account');
+      throw error;
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const loginWithGoogle = async () => {
+    try {
+      setError(null);
+      setIsLoading(true);
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      
+      // Check if user is new
+      if (result.user.metadata.creationTime === result.user.metadata.lastSignInTime) {
+        // New user - create profile
+        await setDoc(doc(db, 'users', result.user.uid), {
+          uid: result.user.uid,
+          email: result.user.email,
+          displayName: result.user.displayName,
+          photoURL: result.user.photoURL,
+          role: 'customer',
+          emailVerified: result.user.emailVerified,
+          createdAt: serverTimestamp(),
+          lastLogin: serverTimestamp()
+        });
+      }
+    } catch (error: any) {
+      console.error('Google sign in error:', error);
+      setError(error.message || 'Failed to sign in with Google');
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const logout = async () => {
+    try {
+      setError(null);
+      await signOut(auth);
+    } catch (error) {
+      console.error('Logout error:', error);
+      setError('Failed to log out');
+      throw error;
+    }
+  };
+
+  // For backward compatibility with existing code
+  const requestOTP = async (email: string): Promise<boolean> => {
+    // In a real implementation, this would send a password reset email or sign-in link
+    console.warn('requestOTP is deprecated. Use login or signup instead.');
+    return true;
   };
 
   const verifyOTP = async (email: string, otp: string): Promise<boolean> => {
-    try {
-      // Mock OTP verification - replace with actual API call
-      if (otp === '123456') {
-        return await login(email);
-      }
-      return false;
-    } catch (error) {
-      console.error('OTP verification error:', error);
-      return false;
-    }
+    // In a real implementation, this would verify the OTP
+    console.warn('verifyOTP is deprecated. Use login or signup instead.');
+    return false;
   };
 
   return (
     <AuthContext.Provider value={{
       user,
       login,
+      signup,
+      loginWithGoogle,
       logout,
       isLoading,
+      error,
       requestOTP,
       verifyOTP
     }}>
