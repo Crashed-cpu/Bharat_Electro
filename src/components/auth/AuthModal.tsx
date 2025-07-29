@@ -28,6 +28,33 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
     try {
       if (mode === 'signup') {
+        if (!displayName.trim()) {
+          throw new Error('Please enter your full name');
+        }
+        if (password.length < 6) {
+          throw new Error('Password must be at least 6 characters long');
+        }
+        await signup(email, password, displayName);
+      } else {
+        await login(email, password);
+      }
+      // Close modal on successful authentication
+      resetModal();
+    } catch (error) {
+      console.error('Authentication error:', error);
+      setError(
+        error instanceof Error 
+          ? error.message 
+          : 'An error occurred during authentication. Please try again.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      if (mode === 'signup') {
         await signup(email, password, displayName);
       } else {
         await login(email, password);
@@ -47,7 +74,11 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       await loginWithGoogle();
       resetModal();
     } catch (error) {
-      setError(authError || 'Failed to sign in with Google');
+      console.error('Google Sign-In error:', error);
+      setError(
+        authError || 
+        'Failed to sign in with Google. Please try again or use email sign in.'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -58,12 +89,20 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     setPassword('');
     setDisplayName('');
     setError(null);
-    onClose();
+    // Small delay to allow any animations to complete
+    setTimeout(() => onClose(), 100);
   };
 
   const toggleMode = () => {
-    setMode(prev => prev === 'login' ? 'signup' : 'login');
-    setError(null);
+    setMode(prev => {
+      const newMode = prev === 'login' ? 'signup' : 'login';
+      // Clear form when switching modes
+      setEmail('');
+      setPassword('');
+      setDisplayName('');
+      setError(null);
+      return newMode;
+    });
   };
 
   return (
