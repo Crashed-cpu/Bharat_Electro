@@ -1,7 +1,18 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
+// Debug log the environment variables
+console.log('Environment variables:', import.meta.env);
+
+// Check if API key is available
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+if (!apiKey) {
+  console.error('Error: VITE_GEMINI_API_KEY is not set in environment variables');
+} else {
+  console.log('Gemini API Key found, initializing...');
+}
+
 // Initialize the Google Generative AI with your API key
-const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
+const genAI = new GoogleGenerativeAI(apiKey || '');
 
 // System prompt to guide the AI's behavior
 const SYSTEM_PROMPT = `You are a helpful assistant for an electronics e-commerce store. 
@@ -26,6 +37,9 @@ export const generateResponse = async (
   userMessage: string,
   chatHistory: ChatMessage[]
 ): Promise<string> => {
+  console.log('Generating response for message:', userMessage);
+  console.log('Chat history length:', chatHistory.length);
+  
   try {
     // Get the generative model
     const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
@@ -59,7 +73,14 @@ export const generateResponse = async (
     return text;
   } catch (error) {
     console.error('Error generating response:', error);
-    return 'I apologize, but I encountered an error while processing your request. Please try again later.';
+    if (error instanceof Error) {
+      console.error('Error details:', {
+        message: error.message,
+        name: error.name,
+        stack: error.stack
+      });
+    }
+    throw new Error('I apologize, but I encountered an error while processing your request. Please try again later.');
   }
 };
 
