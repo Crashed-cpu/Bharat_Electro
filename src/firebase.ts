@@ -25,6 +25,13 @@ if (typeof window !== 'undefined') {
   isSupported().then(yes => yes ? getAnalytics(app) : null);
 }
 
+console.log("💡 Firebase config env values:", {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID
+});
+
+
+
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
