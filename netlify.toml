@@ -4,9 +4,11 @@
   functions = "netlify/functions"
 
 [build.environment]
+  # Node.js and NPM versions
   NODE_VERSION = "20.11.0"
   NPM_VERSION = "10.2.4"
-  # These will be set in Netlify's environment variables
+  
+  # Firebase configuration (set in Netlify's environment variables)
   VITE_FIREBASE_API_KEY = ""
   VITE_FIREBASE_AUTH_DOMAIN = ""
   VITE_FIREBASE_PROJECT_ID = ""
@@ -14,12 +16,16 @@
   VITE_FIREBASE_MESSAGING_SENDER_ID = ""
   VITE_FIREBASE_APP_ID = ""
   VITE_FIREBASE_MEASUREMENT_ID = ""
+  
+  # App configuration
   VITE_APP_NAME = "Your App Name"
   VITE_APP_URL = "https://your-app-url.netlify.app"
   VITE_GEMINI_API_KEY = ""
   
-  # Disable secrets scanning for build output
+  # Security and secrets scanning
   SECRETS_SCAN_ENABLED = "false"
+  SECRETS_SCAN_OMIT_PATHS = "dist/*, node_modules/*"
+  SECRETS_SCAN_OMIT_KEYS = "VITE_APP_NAME, VITE_APP_URL"
   
   # Build optimizations
   NODE_OPTIONS = "--max-old-space-size=4096"
@@ -42,19 +48,12 @@
   command = "npm run dev"
   publish = "dist"
   targetPort = 5173
+  port = 5173
   
-# Ignore files that might contain secrets
+# Security headers
 [[headers]]
   for = "/*"
   [headers.values]
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
     X-XSS-Protection = "1; mode=block"
-    
-# Ignore secrets in these paths
-[build.environment]
-  SECRETS_SCAN_OMIT_PATHS = "dist/*, node_modules/*"
-  SECRETS_SCAN_OMIT_KEYS = "VITE_APP_NAME, VITE_APP_URL"
-  port = 5173
-  publish = "dist"
-  targetPort = 5173
