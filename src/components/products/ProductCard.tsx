@@ -175,17 +175,18 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
   return (
     <>
       <div
-        className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-200 hover:border-[#00BFFF] group"
+        className="h-full flex flex-col bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-200 hover:border-[#00BFFF] group"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        {/* Image */}
-        <div className="relative aspect-square overflow-hidden bg-gray-100 flex-shrink-0">
-          <Link to={`/product/${product.id}`}>
+        {/* Image Container */}
+        <div className="relative pt-[100%] bg-gray-100 overflow-hidden">
+          <Link to={`/product/${product.id}`} className="absolute inset-0 flex items-center justify-center p-4">
             <img
               src={product.image}
               alt={product.name}
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105"
+              style={{ maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto' }}
             />
           </Link>
           
