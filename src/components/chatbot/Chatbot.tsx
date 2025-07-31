@@ -10,7 +10,7 @@ import {
   ChevronRight 
 } from 'lucide-react';
 import { useCart } from '../../contexts/CartContext';
-import { generateResponse, ChatMessage as GeminiMessage } from '../../services/geminiService';
+import { generateResponse } from '../../services/geminiService';
 import { mockProducts } from '../../data/mockProducts';
 
 // Define types
@@ -164,18 +164,14 @@ const Chatbot: React.FC = () => {
     setIsTyping(true);
 
     try {
-      // Generate bot response using Gemini
-      const chatHistory: GeminiMessage[] = messages.map(msg => ({
-        role: msg.type === 'user' ? 'user' : 'model',
-        parts: [{ text: msg.content }]
-      }));
+      // Format the prompt with context
+      const prompt = `You are BoltBot, an assistant for Bharat Electro electronics store. 
+      Help with: ${currentInput}. 
+      Focus on electronics components, technical specs, project suggestions, and product recommendations.
+      Be knowledgeable about Arduino, ESP32, sensors, IoT, robotics, and electronic tools.
+      Keep responses concise and helpful.`;
 
-      // Add context about being an electronics assistant
-      const enhancedPrompt = `As an electronics assistant for Bharat Electro, help with: ${currentInput}. 
-      Focus on electronics components, technical specifications, project suggestions, and product recommendations. 
-      Be helpful and knowledgeable about Arduino, ESP32, sensors, IoT, robotics, and electronic tools.`;
-
-      const botResponseText = await generateResponse(enhancedPrompt, chatHistory);
+      const botResponseText = await generateResponse(prompt);
       
       // Add bot response with enhanced actions
       const botMessage: Message = {
@@ -187,13 +183,15 @@ const Chatbot: React.FC = () => {
       };
 
       setMessages(prev => [...prev, botMessage]);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error generating response:', error);
       // Add error message with fallback functionality
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'bot',
-        content: 'Sorry, I encountered an error with the AI service. But I can still help you find products! What are you looking for?',
+        content: (error instanceof Error && error.message.includes('rate limit')) 
+          ? 'I\'m getting a lot of requests right now. Please wait a moment and try again.'
+          : 'Sorry, I had trouble processing that. How can I help you with your electronics project?',
         timestamp: new Date(),
         actions: [
           { type: 'search', data: { query: 'popular', label: 'Popular Products' } },
