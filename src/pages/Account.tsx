@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { LogOut, Package, Heart, Settings, User as UserIcon, Mail, Phone, MapPin, CreditCard } from 'lucide-react';
 import AuthModal from '../components/auth/AuthModal';
+import { updateUserProfile, getUserProfile } from '../services/authService';
 
 // Import components
 import OrderHistory from '../components/account/OrderHistory';
@@ -39,21 +40,36 @@ const Account: React.FC = () => {
   });
 
   useEffect(() => {
-    if (user) {
-      // In a real app, you would fetch the user's profile from Firestore here
-      const phoneNumber = 'phoneNumber' in user ? (user as any).phoneNumber : '';
-      
-      setFormData({
-        displayName: user.displayName || '',
-        email: user.email || '',
-        phoneNumber: phoneNumber || '',
-        street: '',
-        city: '',
-        state: '',
-        pincode: '',
-        country: 'India',
-      });
-    }
+    const loadUserProfile = async () => {
+      if (user) {
+        try {
+          const userProfile = await getUserProfile(user.uid);
+          
+          if (userProfile) {
+            setFormData({
+              displayName: userProfile.displayName || user.displayName || '',
+              email: userProfile.email || user.email || '',
+              phoneNumber: userProfile.phoneNumber || '',
+              street: userProfile.address?.street || '',
+              city: userProfile.address?.city || '',
+              state: userProfile.address?.state || '',
+              pincode: userProfile.address?.pincode || '',
+              country: userProfile.address?.country || 'India'
+            });
+          }
+        } catch (error) {
+          console.error('Error loading user profile:', error);
+          // Fallback to basic user data if profile fetch fails
+          setFormData(prev => ({
+            ...prev,
+            displayName: user.displayName || '',
+            email: user.email || ''
+          }));
+        }
+      }
+    };
+    
+    loadUserProfile();
   }, [user]);
 
   // Mock order data - moved to OrderHistory component
@@ -71,29 +87,39 @@ const Account: React.FC = () => {
     if (!user) return;
     
     try {
-      // In a real app, we would update the user's profile in Firestore here
-      // For now, we'll just update the local state
-      console.log('Updating profile:', {
+      // Update the user's profile in Firestore
+      await updateUserProfile(user.uid, {
         displayName: formData.displayName,
         phoneNumber: formData.phoneNumber,
-        // Address would be saved to user's profile in Firestore
+        address: {
+          street: formData.street,
+          city: formData.city,
+          state: formData.state,
+          pincode: formData.pincode,
+          country: formData.country
+        }
       });
       
-      // In a real app, we would update the user's profile in Firestore here
-      // await updateProfile(user.uid, {
-      //   displayName: formData.displayName,
-      //   phoneNumber: formData.phoneNumber,
-      //   // ... other profile fields
-      // });
+      // Refresh user data from the database
+      const updatedProfile = await getUserProfile(user.uid);
+      if (updatedProfile) {
+        // Update local state with the fresh data
+        setFormData({
+          displayName: updatedProfile.displayName || '',
+          email: updatedProfile.email || '',
+          phoneNumber: updatedProfile.phoneNumber || '',
+          street: updatedProfile.address?.street || '',
+          city: updatedProfile.address?.city || '',
+          state: updatedProfile.address?.state || '',
+          pincode: updatedProfile.address?.pincode || '',
+          country: updatedProfile.address?.country || 'India'
+        });
+      }
       
       setIsEditing(false);
-      
-      // Show success message
-      // TODO: Replace with toast notification
       alert('Profile updated successfully!');
     } catch (error) {
       console.error('Error updating profile:', error);
-      // TODO: Show error toast/message to user
       alert('Failed to update profile. Please try again.');
     }
   };

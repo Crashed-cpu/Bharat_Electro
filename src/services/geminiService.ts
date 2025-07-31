@@ -41,8 +41,8 @@ export const generateResponse = async (
   console.log('Chat history length:', chatHistory.length);
   
   try {
-    // Get the generative model
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    // Get the generative model - using the latest stable model
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro-latest' });
 
     // Start a chat session with the model
     const chat = model.startChat({
@@ -59,9 +59,9 @@ export const generateResponse = async (
       ],
       generationConfig: {
         maxOutputTokens: 1000,
-        temperature: 0.9,
+        temperature: 0.7, // Slightly lower temperature for more focused responses
         topK: 40,
-        topP: 0.95,
+        topP: 0.9, // Slightly more focused sampling
       },
     });
 
@@ -69,6 +69,10 @@ export const generateResponse = async (
     const result = await chat.sendMessage(userMessage);
     const response = await result.response;
     const text = response.text();
+    
+    if (!text) {
+      throw new Error('Empty response received from the model');
+    }
 
     return text;
   } catch (error) {
@@ -84,9 +88,3 @@ export const generateResponse = async (
   }
 };
 
-// Helper function to extract product information from the AI's response
-export const extractProductInfo = (response: string) => {
-  // This function can be enhanced to parse the AI's response and extract product information
-  // For now, it returns null, but you can implement product extraction logic here
-  return null;
-};

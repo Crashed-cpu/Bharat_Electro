@@ -97,6 +97,7 @@ const OrderHistory: React.FC<OrderHistoryProps> = ({ userId }) => {
 
     try {
       await OrderService.cancelOrder(orderId, {
+        orderId, // Include the orderId in the request body as required by the interface
         reason: cancelReason,
         comment: cancelComment
       });
