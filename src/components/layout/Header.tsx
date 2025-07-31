@@ -100,7 +100,7 @@ const Header: React.FC = () => {
                   {user.role !== 'customer' && (
                     <Link
                       to="/admin"
-                      className="text-sm bg-[#000033] text-white px-3 py-1 rounded hover:bg-[#000044] transition-colors duration-200"
+                      className="ml-4 text-sm bg-[#000033] text-white px-3 py-1 rounded hover:bg-[#000044] transition-colors duration-200"
                       title="Admin Dashboard"
                     >
                       Admin
