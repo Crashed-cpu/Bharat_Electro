@@ -42,7 +42,7 @@ const About: React.FC = () => {
     {
       name: 'Manish Sahu',
       role: 'Co-Founder',
-      image: 'https://via.placeholder.com/300x300?text=Manish+Sahu',
+      image: '/manish.jpeg',
       description: 'Operations and supply chain management expert'
     },
     {
