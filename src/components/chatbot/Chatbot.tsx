@@ -460,7 +460,7 @@ const Chatbot: React.FC = () => {
                       {/* Add All Products Button */}
                       {message.actions?.some(action => action.type === 'product') && (
                         <button
-                          onClick={() => handleAddAllProducts(message.actions.filter(action => action.type === 'product'))}
+                          onClick={() => handleAddAllProducts(message.actions?.filter(action => action.type === 'product') || [])}
                           className="w-full p-3 text-sm bg-[#00BFFF] text-white rounded-lg hover:bg-[#0099CC] transition-colors duration-200 font-medium flex items-center justify-center space-x-2 shadow-sm"
                           aria-label="Add all suggested products to cart"
                         >
