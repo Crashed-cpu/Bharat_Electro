@@ -36,7 +36,7 @@ const About: React.FC = () => {
     {
       name: 'Ayush Saini',
       role: 'Founder & CEO',
-      image: 'https://via.placeholder.com/300x300?text=Ayush+Saini',
+      image: '/ceo.png',
       description: 'Visionary leader with expertise in electronics and business strategy'
     },
     {
@@ -48,8 +48,8 @@ const About: React.FC = () => {
     {
       name: 'Aashutosh Malviya',
       role: 'Co-Founder',
-      image: 'https://via.placeholder.com/300x300?text=Aashutosh+Malviya',
-      description: 'Technical expert and product development specialist'
+      image: '/aashu.jpeg',
+      description: 'Technology and product development specialist'
     }
   ];
 
@@ -176,11 +176,14 @@ const About: React.FC = () => {
                 key={index}
                 className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
               >
-                <img
-                  src={member.image}
-                  alt={member.name}
-                  className="w-full h-64 object-cover"
-                />
+                <div className="w-full h-64 overflow-hidden">
+                  <img
+                    src={member.image}
+                    alt={member.name}
+                    className="w-full h-full object-cover object-center"
+                    style={{ objectFit: 'contain' }}
+                  />
+                </div>
                 <div className="p-6">
                   <h3 className="text-xl font-semibold text-[#000033] mb-2">{member.name}</h3>
                   <p className="text-[#00BFFF] font-medium mb-3">{member.role}</p>
