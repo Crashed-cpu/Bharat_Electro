@@ -40,21 +40,20 @@ const Footer: React.FC = () => {
               <span className="font-bold text-xl">Bharat Electro</span>
             </div>
             <p className="text-gray-300 mb-4 max-w-md">
-              Disrupting India's electronics supply chain with affordable, direct-imported parts,
-              transparent pricing, and modular flexibility for makers and professionals.
+              Original Quality. Lowest Price. Fast Delivery. No Compromise.
             </p>
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
                 <Mail className="w-4 h-4 text-[#00BFFF]" />
-                <span className="text-sm">support@bharatelectro.in</span>
+                <span>the.ayush.factor@gmail.com</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Phone className="w-4 h-4 text-[#00BFFF]" />
-                <span className="text-sm">+91 9876543210</span>
+                <span className="text-sm">+91-773-766-8054</span>
               </div>
               <div className="flex items-center space-x-2">
                 <MapPin className="w-4 h-4 text-[#00BFFF]" />
-                <span className="text-sm">Mumbai, Maharashtra, India</span>
+                <span>Jaipur, Rajasthan, India</span>
               </div>
             </div>
           </div>
