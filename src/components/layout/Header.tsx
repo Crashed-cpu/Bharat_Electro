@@ -8,7 +8,7 @@ const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const { state: cartState } = useCart();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const handleSearch = (e: React.FormEvent) => {
@@ -93,6 +93,7 @@ const Header: React.FC = () => {
                   <Link
                     to="/account"
                     className="text-gray-700 hover:text-[#000033] transition-colors duration-200"
+                    title="My Account"
                   >
                     <User className="w-6 h-6" />
                   </Link>
@@ -100,16 +101,11 @@ const Header: React.FC = () => {
                     <Link
                       to="/admin"
                       className="text-sm bg-[#000033] text-white px-3 py-1 rounded hover:bg-[#000044] transition-colors duration-200"
+                      title="Admin Dashboard"
                     >
                       Admin
                     </Link>
                   )}
-                  <button
-                    onClick={logout}
-                    className="text-sm text-gray-600 hover:text-gray-800 transition-colors duration-200"
-                  >
-                    Logout
-                  </button>
                 </div>
               ) : (
                 <Link
